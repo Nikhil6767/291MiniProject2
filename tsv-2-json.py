@@ -1,5 +1,4 @@
 # adapted from https://www.geeksforgeeks.org/python-tsv-conversion-to-json/
-
 import json
 
 def tsv2json(input_file,output_file):
