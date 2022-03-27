@@ -28,7 +28,7 @@ def load_data(col_names, collections):
 		collections[i].insert_many(data)
 
 if __name__ == "__main__":
-	
+
 	if len(sys.argv) != 2:
 		print("Usage: python3 load-json.py port_num")
 		exit()
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 	# connect to server
 	client = MongoClient('localhost', port_num)
 
-	# # create or open database
+	# create or open database
 	db = client["291db"]
 
 	# create the collections

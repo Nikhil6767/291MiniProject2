@@ -1,34 +1,25 @@
-from pymongo import MongoClient
+from pymongo import *
 import sys
 
-##-- MAIN --##
-if __name__ == "__main__":
-	# check for cmd line args
-	if len(sys.argv) != 2:
-		print("Usage: python3 miniproject2.py port_num")
-		exit()
-
-	# get the port num
-	port_num = int(sys.argv[1])
-	# connect to server
-	client = MongoClient('localhost', port_num)
-
-	# open database
-	db = client["291db"]
-
-	# open collections
-	name_basics = db ["name_basics"]
-	title_basics = db["title_basics"]
-	title_principals = db["title_principals"]
-	title_ratings = db["title_ratings"]
-
-	main_loop(name_basics, title_basics, title_principals, title_ratings)
-
 ##-- Functions --##
-def search_titles():
+def search_titles(title_basics):
 	# get keywords from the user
 	keywords = input("Enter in keywords to search seperated by space: ").split()
-	print(keywords)
+	# title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
+	
+	title_basics.create_index([("primaryTitle", "text"),
+                            ("startYear", "text")])
+	search = keywords[0] + " "
+	for i in range(1, len(keywords)):
+		if i == len(keywords) -1:
+			search = keywords[i]
+		else:
+			search = keywords[i] + " "
+
+
+	res = title_basics.find({"$text": {"$search": search}})
+	for r in res:
+		print(r)
 	return
 
 def search_genres():
@@ -57,7 +48,7 @@ def main_loop(name_basics, title_basics, title_principals, title_ratings):
 		''')
 		user_choice = int(input("Select an option: "))
 		if user_choice == 1:
-			search_titles()
+			search_titles(title_basics)
 		elif user_choice == 2:
 			search_genres()
 		elif user_choice == 3:
@@ -68,4 +59,29 @@ def main_loop(name_basics, title_basics, title_principals, title_ratings):
 			add_cast()
 		elif user_choice == 6:
 			loop = False
+
+##-- MAIN --##
+if __name__ == "__main__":
+	# check for cmd line args
+	if len(sys.argv) != 2:
+		print("Usage: python3 miniproject2.py port_num")
+		exit()
+
+	# get the port num
+	port_num = int(sys.argv[1])
+	# connect to server
+	client = MongoClient('localhost', port_num)
+
+	# open database
+	db = client["291db"]
+
+	# open collections
+	name_basics = db["name_basics"]
+	title_basics = db["title_basics"]
+	title_principals = db["title_principals"]
+	title_ratings = db["title_ratings"]
+
+	main_loop(name_basics, title_basics, title_principals, title_ratings)
+
+
 
