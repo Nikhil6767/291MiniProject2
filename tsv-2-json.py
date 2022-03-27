@@ -13,8 +13,6 @@ def tsv2json(input_file,output_file):
     for line in file:
         d = {}
         for t, f in zip(titles, line.split('\t')):
-            print("t is ", t)
-            print("f is ", f)
             if t == "primaryProfession" or t == "knownForTitles" or t == "genres" or t == "characters":
                 f = f.strip()
                 f = f.split(",")
