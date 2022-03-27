@@ -5,17 +5,21 @@ import sys
 def search_titles(title_basics):
 	# get keywords from the user
 	keywords = input("Enter in keywords to search seperated by space: ").split()
-	# title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
-	
-	title_basics.create_index([("primaryTitle", "text"),
-                            ("startYear", "text")])
-	search = keywords[0] + " "
-	for i in range(1, len(keywords)):
-		if i == len(keywords) -1:
-			search = keywords[i]
-		else:
-			search = keywords[i] + " "
 
+	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
+
+	if len(keywords) == 0:
+		print("No keywords entered")
+		return
+	elif len(keywords) == 1:
+		search = "\\" + keywords[0]
+	else:
+		search = keywords[0] + " "
+		for i in range(1, len(keywords)):
+			if i == len(keywords) -1:
+				search += "\"" + keywords[i] +"\""
+			else:
+				search += "\"" + keywords[i] +"\"" + " "
 
 	res = title_basics.find({"$text": {"$search": search}})
 	for r in res:
