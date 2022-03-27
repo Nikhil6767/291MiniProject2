@@ -2,28 +2,63 @@ from pymongo import *
 import sys
 
 ##-- Functions --##
-def search_titles(title_basics):
+def search_titles(name_basics, title_basics, title_principals, title_ratings):
 	# get keywords from the user
 	keywords = input("Enter in keywords to search seperated by space: ").split()
-
+	# make index on title and year for searching
 	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
 
 	if len(keywords) == 0:
 		print("No keywords entered")
 		return
 	elif len(keywords) == 1:
-		search = "\\" + keywords[0]
+		search = "\"" + keywords[0] + "\""
 	else:
-		search = keywords[0] + " "
+		search = "\"" + keywords[0] + "\"" + " "
 		for i in range(1, len(keywords)):
 			if i == len(keywords) -1:
 				search += "\"" + keywords[i] +"\""
 			else:
 				search += "\"" + keywords[i] +"\"" + " "
 
+	print(search)
+
 	res = title_basics.find({"$text": {"$search": search}})
+
+	# get the tconst for all the results
+	tconst = []
+	i = 1
+	for r in res:
+		print(i, r)
+		tconst.append(r["tconst"])
+		i += 1
+
+	if len(tconst) == 0:
+		print("No matches found")
+		return
+
+	# get movie from user
+	pick_mov = True
+	while pick_mov:
+		movie_choice = int(input("Select a movie: "))
+		try:
+			tconst_find = tconst[movie_choice-1]
+		except:
+			print("Invalid movie choice, pick again")
+			continue
+		pick_mov = False
+
+	res = title_ratings.find({"tconst":tconst_find})
+	for r in res:
+		print('''
+rating: {}
+number of votes: {}
+			'''.format(r["averageRating"], r["numVotes"]))
+	
+	res = name_basics.find({"knownForTitles":tconst_find})
 	for r in res:
 		print(r)
+
 	return
 
 def search_genres():
@@ -52,7 +87,7 @@ def main_loop(name_basics, title_basics, title_principals, title_ratings):
 		''')
 		user_choice = int(input("Select an option: "))
 		if user_choice == 1:
-			search_titles(title_basics)
+			search_titles(name_basics, title_basics, title_principals, title_ratings)
 		elif user_choice == 2:
 			search_genres()
 		elif user_choice == 3:
@@ -86,6 +121,3 @@ if __name__ == "__main__":
 	title_ratings = db["title_ratings"]
 
 	main_loop(name_basics, title_basics, title_principals, title_ratings)
-
-
-
