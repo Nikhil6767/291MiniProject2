@@ -1,3 +1,4 @@
+from numpy import char
 from pymongo import *
 import sys
 
@@ -5,6 +6,10 @@ import sys
 def search_titles(name_basics, title_basics, title_principals, title_ratings):
 	# get keywords from the user
 	keywords = input("Enter in keywords to search seperated by space: ").split()
+
+	# clear existing indexes
+	title_basics.drop_indexes()
+
 	# make index on title and year for searching
 	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
 
@@ -61,17 +66,206 @@ number of votes: {}
 
 	return
 
-def search_genres():
-	return
+def search_genres(title_basics, title_ratings):
+	try:
+		genre = input("enter a genre: ")
+		genre = "\"" + genre + "\""
+		min_count = int(input("enter minimum vote count: "))
+	except:
+		print("invalid inputs... exiting")
+		return
+	
+	
 
-def search_cast():
-	return
+	# clear existing indexes
+	title_basics.drop_indexes()
+	title_ratings.drop_indexes()
 
-def add_movie():
-	return
+	# create index for genres and ratings
+	title_basics.create_index([("genres", "text"),])
+	title_ratings.create_index([("numVotes", 1),])
 
-def add_cast():
-	return
+	result = []
+
+	# find all movies that have specified genre
+	movies = title_basics.find({"$text": {"$search": genre}})
+	for movie in movies:
+		# find movies with numVotes greater than specifies min_count
+		rating = title_ratings.find({
+  									"numVotes": {
+    								"$gt": min_count
+  									},
+									 "tconst": movie["tconst"]
+									})
+		
+		for r in rating:
+			result.append([r["numVotes"], movie["primaryTitle"]])
+		
+	for r in sorted(result, reverse=True):
+		print(r[1])
+
+	
+
+def search_cast(name_basics, title_basics, title_principals):
+	try:
+		name = input("enter a cast/crew name: ")
+		name = "\"" + name + "\""
+	except:
+		print("invalid inputs... exiting")
+	
+	# clear existing indexes
+	name_basics.drop_indexes()
+	title_basics.drop_indexes()
+	title_principals.drop_indexes()
+
+	# add new indexes
+	name_basics.create_index([("primaryName", "text")])
+	title_basics.create_index([("tconst", "text")])
+	title_principals.create_index([("nconst", "text")])
+
+	# first find cast based on name to find professions
+	names = name_basics.find({"$text": {"$search": name}})
+	for n in names:
+		print(n["primaryName"])
+		print("professions: ")
+		for proffesion in n["primaryProfession"]:
+			print(proffesion)
+		# then find job and characters info using nconst
+		titleps = title_principals.find({"$text": {"$search": n["nconst"]}})
+		for titlep in titleps:
+			print("title:")
+			# finally find title using tconst
+			title = title_basics.find({"$text": {"$search": titlep["tconst"]}})
+			for t in title:
+				print(t["primaryTitle"])
+			print("job:")
+			# do a check if job is null
+			job = titlep["job"]
+			job = job.strip('\\')
+			if job != "N":
+				print(job)
+			else:
+				print("not available")
+			print("character:")
+			# do a check if character is null
+			character = titlep["characters"]
+			try:
+				character.strip('\\')
+				# if we are here then there is no list of characters
+				print("not available")
+			except:
+				for c in titlep["characters"]:
+					print(c)
+
+
+def add_movie(title_basics):
+	id = input("enter a unique id: ")
+
+	# clear existing indexes
+	title_basics.drop_indexes()
+
+	# add new indexes
+	title_basics.create_index([("tconst", "text")])
+	unique = title_basics.find({"$text": {"$search": id}})
+	
+	# check if id is unique
+	count = 0
+	for u in unique:
+		count += 1
+	if count == 0:
+		print("id is unique... continuing")
+	else:
+		print("id is not unique... exiting")
+		return
+	
+	title = input("enter movie title: ")
+	s_year = input("enter start year: ")
+	r_time = input("enter the running time: ")
+	genres = input("enter space seperated all genres for the movie: ").split(" ")
+
+	# insert info
+	title_basics.insert_one({"tconst": id,
+							 "titleType": "movie",
+							 "primaryTitle": title,
+							 "originalTitle": title,
+							 "isAdult": "\\N",
+							 "startYear": s_year,
+							 "endYear": "\\N",
+							 "runtimeMinutes": r_time,
+							 "genres": genres})
+
+	print("done adding movie... exiting")
+
+
+def add_cast(name_basics, title_basics, title_principals, title_ratings):
+	print("preparing...")
+	# clear existing indexes
+	title_basics.drop_indexes()
+	title_principals.drop_indexes()
+	name_basics.drop_indexes()
+
+	# add new indexes
+	title_basics.create_index([("tconst", "text")])
+	title_principals.create_index([("tconst", "text"), ("ordering", 1)])
+	name_basics.create_index([("nconst", "text")])
+
+	tid = input("enter existing title id: ")
+	unique = title_basics.find({"$text": {"$search": tid}})
+
+	# check if title id exists
+	count = 0
+	for u in unique:
+		count += 1
+	if count == 0:
+		print("title id is not in database... exiting")
+		return
+	else:
+		print("title id is in database... continuing")
+
+
+	nid = input("enter existing cast/crew member id: ")
+
+	unique = name_basics.find({"$text": {"$search": nid}})
+
+	# check if persons id exists
+	count = 0
+	for u in unique:
+		count += 1
+	if count == 0:
+		print("persons id is not in database... exiting")
+		return
+	else:
+		print("persons id is in database... continuing")
+	
+
+	cat = input("enter a category: ")
+	
+	# find largest orderings
+	ords = title_principals.find({"$text": {"$search": tid}}).sort("ordering", -1).limit(1)
+	for o in ords:
+		# insert info
+		title_principals.insert_one({"tconst": tid,
+								"ordering": o["ordering"] + 1,
+								"nconst": nid,
+								"category": cat,
+								"job": "\\N",
+								"characters": "\\N"})
+
+		print("done adding cast/crew... exiting")
+		return
+
+	# if we are here then that means that the title id is not yet in title_principals
+	# insert info
+	title_principals.insert_one({"tconst": tid,
+							"ordering": 1,
+							"nconst": nid,
+							"category": cat,
+							"job": "\\N",
+							"characters": "\\N"})
+
+	print("done adding cast/crew... exiting")
+
+
 
 def main_loop(name_basics, title_basics, title_principals, title_ratings):
 	loop = True
@@ -89,13 +283,13 @@ def main_loop(name_basics, title_basics, title_principals, title_ratings):
 		if user_choice == 1:
 			search_titles(name_basics, title_basics, title_principals, title_ratings)
 		elif user_choice == 2:
-			search_genres()
+			search_genres(title_basics, title_ratings)
 		elif user_choice == 3:
-			search_cast()
+			search_cast(name_basics, title_basics, title_principals)
 		elif user_choice == 4:
-			add_movie()
+			add_movie(title_basics)
 		elif user_choice == 5:
-			add_cast()
+			add_cast(name_basics, title_basics, title_principals, title_ratings)
 		elif user_choice == 6:
 			loop = False
 
