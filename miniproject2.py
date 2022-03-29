@@ -8,10 +8,10 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 	keywords = input("Enter in keywords to search seperated by space: ").split()
 
 	# clear existing indexes
-	title_basics.drop_indexes()
+	# title_basics.drop_indexes()
 
 	# make index on title and year for searching
-	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
+	# title_basics.create_index([("primaryTitle", "text"), ("startYear", "text")])
 
 	if len(keywords) == 0:
 		print("No keywords entered")
@@ -108,20 +108,25 @@ def search_genres(title_basics, title_ratings):
 	title_ratings.create_index([("numVotes", 1),])
 
 	result = []
-
+	print('first find')
 	# find all movies that have specified genre
 	movies = title_basics.find({"$text": {"$search": genre}})
+	mt = []
 	for movie in movies:
+		mt.append(movie["tconst"])
 		# find movies with numVotes greater than specifies min_count
-		rating = title_ratings.find({
+
+	rating = title_ratings.find({
   									"numVotes": {
     								"$gt": min_count
-  									},
-									 "tconst": movie["tconst"]
+  									}
 									})
 		
-		for r in rating:
-			result.append([r["numVotes"], movie["primaryTitle"]])
+	for r in rating:
+		if r["tconst"] in mt:
+			print(r)
+			movies = title_basics.find_one({"tconst": r["tconst"]})
+			result.append([r["numVotes"], movies["primaryTitle"]])
 		
 	for r in sorted(result, reverse=True):
 		print(r[1])
@@ -136,14 +141,14 @@ def search_cast(name_basics, title_basics, title_principals):
 		print("invalid inputs... exiting")
 	
 	# clear existing indexes
-	name_basics.drop_indexes()
-	title_basics.drop_indexes()
-	title_principals.drop_indexes()
+	# name_basics.drop_indexes()
+	# title_basics.drop_indexes()
+	# title_principals.drop_indexes()
 
 	# add new indexes
-	name_basics.create_index([("primaryName", "text")])
-	title_basics.create_index([("tconst", "text")])
-	title_principals.create_index([("nconst", "text")])
+	# name_basics.create_index([("primaryName", "text")])
+	# title_basics.create_index([("tconst", "text")])
+	# title_principals.create_index([("nconst", "text")])
 
 	# first find cast based on name to find professions
 	names = name_basics.find({"$text": {"$search": name}})
@@ -184,10 +189,10 @@ def add_movie(title_basics):
 	id = input("enter a unique id: ")
 
 	# clear existing indexes
-	title_basics.drop_indexes()
+	# title_basics.drop_indexes()
 
 	# add new indexes
-	title_basics.create_index([("tconst", "text")])
+	# title_basics.create_index([("tconst", "text")])
 	unique = title_basics.find({"$text": {"$search": id}})
 	
 	# check if id is unique
@@ -222,14 +227,14 @@ def add_movie(title_basics):
 def add_cast(name_basics, title_basics, title_principals, title_ratings):
 	print("preparing...")
 	# clear existing indexes
-	title_basics.drop_indexes()
-	title_principals.drop_indexes()
-	name_basics.drop_indexes()
+	# title_basics.drop_indexes()
+	# title_principals.drop_indexes()
+	# name_basics.drop_indexes()
 
 	# add new indexes
-	title_basics.create_index([("tconst", "text")])
-	title_principals.create_index([("tconst", "text"), ("ordering", 1)])
-	name_basics.create_index([("nconst", "text")])
+	# title_basics.create_index([("tconst", "text")])
+	# title_principals.create_index([("tconst", "text"), ("ordering", 1)])
+	# name_basics.create_index([("nconst", "text")])
 
 	tid = input("enter existing title id: ")
 	unique = title_basics.find({"$text": {"$search": tid}})

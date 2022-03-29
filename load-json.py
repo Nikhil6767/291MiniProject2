@@ -45,6 +45,21 @@ if __name__ == "__main__":
 	col_names = ["name_basics", "title_basics", "title_principals", "title_ratings"]
 	collections = make_collections(db, col_names)
 
+	print("loading...")
 	# load json data
 	file_names = ['name.basics.json', 'title.basics.json', 'title.principals.json', 'title.ratings.json']
 	load_data(file_names, collections)
+
+	# open collections
+	name_basics = db["name_basics"]
+	title_basics = db["title_basics"]
+	title_principals = db["title_principals"]
+	title_ratings = db["title_ratings"]
+
+	# make indexes
+	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text"), ("genres", "text"), ("tconst", "text")])
+	name_basics.create_index([("primaryName", "text")])
+	title_ratings.create_index([("tconst", "text"), ("numVotes", 1)])
+	title_principals.create_index([("nconst", "text"), ("ordering", 1)])
+
+	print("done")
