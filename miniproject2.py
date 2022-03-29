@@ -108,7 +108,7 @@ def search_genres(title_basics, title_ratings):
 	title_ratings.create_index([("numVotes", 1),])
 
 	result = []
-	print('first find')
+
 	# find all movies that have specified genre
 	movies = title_basics.find({"$text": {"$search": genre}})
 	mt = []
