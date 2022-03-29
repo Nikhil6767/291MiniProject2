@@ -26,8 +26,7 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 			else:
 				search += "\"" + keywords[i] +"\"" + " "
 
-	print(search)
-
+	# find the matches
 	movies = title_basics.find({"$text": {"$search": search}})
 
 	# get the tconst for all the results
@@ -55,32 +54,38 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 			continue
 		pick_mov = False
 
+	# get the ratings and votes
 	rating = title_ratings.find({"tconst":tconst_find})
 	for rate in rating:
 		print('''
 rating: {}
 number of votes: {}
-cast/crew: '''.format(rate["averageRating"], rate["numVotes"]), end = " ")
+cast/crew: '''.format(rate["averageRating"], rate["numVotes"]))
 
+	# find the nconsts of the cast
+	nconst = []
+	casts = title_principals.find({"tconst":tconst_find})
+	for cast in casts:
+		nconst.append(cast["nconst"])
 
-	names = name_basics.find({"knownForTitles":{"$elemMatch":{"$in":[tconst_find]}}})
-	
-	for name in names:
-		print("name is monke ", name)
-		nconst_find = name["nconst"]
+	# find the names of cast
+	for n in nconst:
+		names = name_basics.find_one({"nconst": n})
+		print(names["primaryName"], "who plays", end = " ")
+
+		# find the characters played
+		casts = title_principals.find_one({"$and": [{"nconst":n}, {"tconst": tconst_find}]})
+		for i in range(0, len(casts["characters"])):
+			
+			if casts["characters"][i] == "\\":
+				print("no one")
+
+			elif casts["characters"][i] != "N" and i != len(casts["characters"]) - 1:
+				print(casts["characters"][i], end = ", ")
+
+			elif casts["characters"][i] != "N" and i == len(casts["characters"]) - 1:
+				print(casts["characters"][i])
 		
-		characters = title_principals.find({"$and": [{"nconst":nconst_find}, {"tconst": tconst_find}]})
-		for char in characters:
-			print(name["primaryName"], end = " ")
-
-			for i in range(len(char["characters"])):
-				if char["characters"][i] != "\\N" and i != len(char["characters"]) - 1:
-					print(char["characters"][i], end = ", ")
-				elif char["characters"][i] != "\\N" and i == len(char["characters"]) - 1:
-					print(char["characters"][i], end = " ")
-				else:
-					print(", ", end = " ")
-
 	return
 
 def search_genres(title_basics, title_ratings):
