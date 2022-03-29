@@ -23,14 +23,14 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 
 	print(search)
 
-	res = title_basics.find({"$text": {"$search": search}})
+	movies = title_basics.find({"$text": {"$search": search}})
 
 	# get the tconst for all the results
 	tconst = []
 	i = 1
-	for r in res:
-		print(i, r)
-		tconst.append(r["tconst"])
+	for movie in movies:
+		print(i, movie)
+		tconst.append(movie["tconst"])
 		i += 1
 
 	if len(tconst) == 0:
@@ -40,7 +40,9 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 	# get movie from user
 	pick_mov = True
 	while pick_mov:
-		movie_choice = int(input("Select a movie: "))
+		movie_choice = int(input("Select a movie or press 0 to return to main menu: "))
+		if movie_choice == 0: return
+		# check for valid input
 		try:
 			tconst_find = tconst[movie_choice-1]
 		except:
@@ -48,16 +50,31 @@ def search_titles(name_basics, title_basics, title_principals, title_ratings):
 			continue
 		pick_mov = False
 
-	res = title_ratings.find({"tconst":tconst_find})
-	for r in res:
+	rating = title_ratings.find({"tconst":tconst_find})
+	for rate in rating:
 		print('''
 rating: {}
 number of votes: {}
-			'''.format(r["averageRating"], r["numVotes"]))
+cast/crew: '''.format(rate["averageRating"], rate["numVotes"]), end = " ")
+
+
+	names = name_basics.find({"knownForTitles":{"$elemMatch":{"$in":[tconst_find]}}})
 	
-	res = name_basics.find({"knownForTitles":tconst_find})
-	for r in res:
-		print(r)
+	for name in names:
+		print("name is monke ", name)
+		nconst_find = name["nconst"]
+		
+		characters = title_principals.find({"$and": [{"nconst":nconst_find}, {"tconst": tconst_find}]})
+		for char in characters:
+			print(name["primaryName"], end = " ")
+
+			for i in range(len(char["characters"])):
+				if char["characters"][i] != "\\N" and i != len(char["characters"]) - 1:
+					print(char["characters"][i], end = ", ")
+				elif char["characters"][i] != "\\N" and i == len(char["characters"]) - 1:
+					print(char["characters"][i], end = " ")
+				else:
+					print(", ", end = " ")
 
 	return
 
