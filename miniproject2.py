@@ -100,12 +100,12 @@ def search_genres(title_basics, title_ratings):
 	
 
 	# clear existing indexes
-	title_basics.drop_indexes()
-	title_ratings.drop_indexes()
+	# title_basics.drop_indexes()
+	# title_ratings.drop_indexes()
 
-	# create index for genres and ratings
-	title_basics.create_index([("genres", "text"),])
-	title_ratings.create_index([("numVotes", 1),])
+	# # create index for genres and ratings
+	# title_basics.create_index([("genres", "text"),])
+	# title_ratings.create_index([("numVotes", 1),])
 
 	result = []
 
