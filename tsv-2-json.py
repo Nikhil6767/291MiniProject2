@@ -3,7 +3,7 @@ import json
 
 def tsv2json(input_file,output_file):
     arr = []
-    file = open(input_file, 'r')
+    file = open(input_file, 'r', encoding='utf-8')
     a = file.readline()
       
     # The first line consist of headings of the record 
@@ -14,10 +14,20 @@ def tsv2json(input_file,output_file):
         d = {}
         for t, f in zip(titles, line.split('\t')):
             if t == "primaryProfession" or t == "knownForTitles" or t == "genres" or t == "characters":
+                newf = []
                 f = f.strip()
                 f = f.split(",")
+                for i in f:
+                    item = i.strip('[]\\\"')
+                    if item == "N":
+                        newf = "\\N"
+                        break
+                    newf.append(item)
                 
-                d[t] = f
+                d[t] = newf
+            elif t == "numVotes" or t == "ordering":
+                f = f.strip()
+                d[t] = int(f)
             else:
                 # Convert each row into dictionary with keys as titles
                 d[t] = f.strip()
