@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
 	# make indexes
 	title_basics.create_index([("primaryTitle", "text"), ("startYear", "text"), ("genres", "text"), ("tconst", "text")])
-	name_basics.create_index([("primaryName", "text")])
+	name_basics.create_index([("primaryName", "text"), ("nconst", "text")])
 	title_ratings.create_index([("tconst", "text"), ("numVotes", 1)])
 	title_principals.create_index([("nconst", "text"), ("ordering", 1)])
 
